@@ -9,7 +9,7 @@ import Foundation
 
 class Constants {
     static let error = "Error"
-    static let errorMessage = "No valid image to save."
+    static let errorMessage = "Failed to save image."
     static let success = "Success"
     static let successMessage = "Image saved to photo library."
 }

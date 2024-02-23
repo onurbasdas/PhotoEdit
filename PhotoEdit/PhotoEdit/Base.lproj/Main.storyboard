@@ -81,6 +81,7 @@
                     </navigationItem>
                     <connections>
                         <outlet property="candidateCollectionView" destination="jFw-x1-Ufu" id="MVi-qI-jg6"/>
+                        <outlet property="candidateImageBgView" destination="P5X-YO-dO5" id="oiQ-VQ-dFI"/>
                         <outlet property="candidateImageView" destination="vT1-0h-fLe" id="lXV-Cb-9ji"/>
                     </connections>
                 </viewController>

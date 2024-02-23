@@ -11,9 +11,11 @@ import Photos
 class CandidateViewController: UIViewController {
     
     @IBOutlet weak var candidateCollectionView: UICollectionView!
+    @IBOutlet weak var candidateImageBgView: UIView!
     @IBOutlet weak var candidateImageView: UIImageView!
     
     let viewModel = CandidateViewModel()
+    private var panGesture: UIPanGestureRecognizer?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,9 +27,13 @@ class CandidateViewController: UIViewController {
         candidateCollectionView.dataSource = self
         candidateCollectionView.register(CandidateCollectionViewCell.nib(), forCellWithReuseIdentifier: CandidateCollectionViewCell.identifier)
         getData()
-//        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap))
-//        candidateImageView.addGestureRecognizer(tapGesture)
-//        candidateImageView.isUserInteractionEnabled = true
+        setupGestures()
+    }
+    
+    private func setupGestures() {
+        panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        candidateImageView.isUserInteractionEnabled = true
+        candidateImageView.addGestureRecognizer(panGesture!)
     }
     
     func getData() {
@@ -38,7 +44,6 @@ class CandidateViewController: UIViewController {
                 DispatchQueue.main.async {
                     self.candidateCollectionView.reloadData()
                 }
-                
             case .failure(let error):
                 switch error {
                 case .invalidURL:
@@ -53,39 +58,22 @@ class CandidateViewController: UIViewController {
     }
     
     @IBAction func cancelButtonPressed(_ sender: UIBarButtonItem) {
-        clearImage()
+        clearOverlay()
     }
     
-    private func clearImage() {
-        candidateImageView.image = nil
+    private func clearOverlay() {
+        candidateImageView.image = UIImage(named: "ic_image")
     }
     
     @IBAction func saveButtonPressed(_ sender: UIBarButtonItem) {
         saveImageToPhotos()
     }
     
-//    @objc private func handleImageTap() {
-//        showImagePicker()
-//    }
-//    private func showImagePicker() {
-//        let imagePicker = UIImagePickerController()
-//        imagePicker.delegate = self
-//        imagePicker.sourceType = .photoLibrary
-//        present(imagePicker, animated: true, completion: nil)
-//    }
-    
     private func saveImageToPhotos() {
-        guard let imageToSave = candidateImageView.image else {
-            showAlert(title: Constants.error, message: Constants.errorMessage)
-            return
-        }
+        guard let imageToSave = candidateImageView.image else { return }
         
         PHPhotoLibrary.requestAuthorization { status in
-            guard status == .authorized else {
-                print("Permission denied to access photo library.")
-                return
-            }
-            
+            guard status == .authorized else { return }
             PHPhotoLibrary.shared().performChanges {
                 let request = PHAssetChangeRequest.creationRequestForAsset(from: imageToSave)
                 request.creationDate = Date()
@@ -94,7 +82,7 @@ class CandidateViewController: UIViewController {
                     if success {
                         self.showAlert(title: Constants.success, message: Constants.successMessage)
                     } else {
-                        self.showAlert(title: Constants.error, message: "Failed to save image. \(error?.localizedDescription ?? "")")
+                        self.showAlert(title: Constants.error, message: Constants.errorMessage)
                     }
                 }
             }
@@ -133,6 +121,16 @@ class CandidateViewController: UIViewController {
         completion(newImage)
     }
     
+    @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+         guard let imageView = gesture.view else { return }
+         
+         if gesture.state == .began || gesture.state == .changed {
+             let translation = gesture.translation(in: imageView)
+             imageView.frame.origin.x += translation.x
+             imageView.frame.origin.y += translation.y
+             gesture.setTranslation(.zero, in: imageView)
+         }
+     }
 }
 
 extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
@@ -154,10 +152,7 @@ extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollect
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if let overlayUrl = viewModel.getCandidate(at: indexPath.row)?.overlayUrl {
             loadImage(from: overlayUrl) { overlayImage in
-                guard let overlayImage = overlayImage else {
-                    print("Failed to load overlay image")
-                    return
-                }
+                guard let overlayImage = overlayImage else { return }
                 
                 if let currentImage = self.candidateImageView.image {
                     self.applyBitmapOverlay(image: currentImage, overlayImage: overlayImage) { resultImage in
@@ -172,19 +167,3 @@ extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollect
         }
     }
 }
-
-extension CandidateViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let pickedImage = info[.originalImage] as? UIImage {
-            candidateImageView.image = pickedImage
-        }
-        picker.dismiss(animated: true, completion: nil)
-    }
-    
-    
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        picker.dismiss(animated: true, completion: nil)
-    }
-}
-
-//core graphics for bitmap operation

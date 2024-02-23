@@ -18,17 +18,16 @@ class CandidateViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        getData()
     }
     
     private func setupUI() {
         candidateCollectionView.delegate = self
         candidateCollectionView.dataSource = self
         candidateCollectionView.register(CandidateCollectionViewCell.nib(), forCellWithReuseIdentifier: CandidateCollectionViewCell.identifier)
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap))
-        candidateImageView.addGestureRecognizer(tapGesture)
-        candidateImageView.isUserInteractionEnabled = true
+        getData()
+//        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap))
+//        candidateImageView.addGestureRecognizer(tapGesture)
+//        candidateImageView.isUserInteractionEnabled = true
     }
     
     func getData() {
@@ -65,16 +64,15 @@ class CandidateViewController: UIViewController {
         saveImageToPhotos()
     }
     
-    @objc private func handleImageTap() {
-        showImagePicker()
-    }
-    
-    private func showImagePicker() {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .photoLibrary
-        present(imagePicker, animated: true, completion: nil)
-    }
+//    @objc private func handleImageTap() {
+//        showImagePicker()
+//    }
+//    private func showImagePicker() {
+//        let imagePicker = UIImagePickerController()
+//        imagePicker.delegate = self
+//        imagePicker.sourceType = .photoLibrary
+//        present(imagePicker, animated: true, completion: nil)
+//    }
     
     private func saveImageToPhotos() {
         guard let imageToSave = candidateImageView.image else {
@@ -102,6 +100,39 @@ class CandidateViewController: UIViewController {
             }
         }
     }
+    
+    private func loadImage(from url: String, completion: @escaping (UIImage?) -> Void) {
+        if let imageUrl = URL(string: url) {
+            URLSession.shared.dataTask(with: imageUrl) { (data, response, error) in
+                if let data = data, let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        completion(image)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        completion(nil)
+                    }
+                }
+            }.resume()
+        } else {
+            DispatchQueue.main.async {
+                completion(nil)
+            }
+        }
+    }
+    
+    private func applyBitmapOverlay(image: UIImage, overlayImage: UIImage, completion: @escaping (UIImage?) -> Void) {
+        let rect = CGRect(x: 0, y: 0, width: image.size.width, height: image.size.height)
+        
+        UIGraphicsBeginImageContextWithOptions(rect.size, false, 0.0)
+        image.draw(in: rect)
+        overlayImage.draw(in: rect, blendMode: .normal, alpha: 0.5)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        completion(newImage)
+    }
+    
 }
 
 extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
@@ -121,8 +152,24 @@ extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollect
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let overlayUrl = viewModel.getCandidate(at: indexPath.row)?.overlayUrl ?? ""
-        print(overlayUrl)
+        if let overlayUrl = viewModel.getCandidate(at: indexPath.row)?.overlayUrl {
+            loadImage(from: overlayUrl) { overlayImage in
+                guard let overlayImage = overlayImage else {
+                    print("Failed to load overlay image")
+                    return
+                }
+                
+                if let currentImage = self.candidateImageView.image {
+                    self.applyBitmapOverlay(image: currentImage, overlayImage: overlayImage) { resultImage in
+                        if let resultImage = resultImage {
+                            self.candidateImageView.image = resultImage
+                        } else {
+                            print("Failed to apply overlay")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -134,7 +181,10 @@ extension CandidateViewController: UIImagePickerControllerDelegate, UINavigation
         picker.dismiss(animated: true, completion: nil)
     }
     
+    
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true, completion: nil)
     }
 }
+
+//core graphics for bitmap operation

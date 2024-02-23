@@ -14,18 +14,9 @@ struct CandidateModel : Codable {
     let overlayUrl : String?
 
     enum CodingKeys: String, CodingKey {
-
         case overlayId = "overlayId"
         case overlayName = "overlayName"
         case overlayPreviewIconUrl = "overlayPreviewIconUrl"
         case overlayUrl = "overlayUrl"
-    }
-
-    init(from decoder: Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        overlayId = try values.decodeIfPresent(Int.self, forKey: .overlayId)
-        overlayName = try values.decodeIfPresent(String.self, forKey: .overlayName)
-        overlayPreviewIconUrl = try values.decodeIfPresent(String.self, forKey: .overlayPreviewIconUrl)
-        overlayUrl = try values.decodeIfPresent(String.self, forKey: .overlayUrl)
     }
 }

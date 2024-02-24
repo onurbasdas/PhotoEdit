@@ -13,27 +13,38 @@ class CandidateViewController: UIViewController {
     @IBOutlet weak var candidateCollectionView: UICollectionView!
     @IBOutlet weak var candidateImageBgView: UIView!
     @IBOutlet weak var candidateImageView: UIImageView!
+    @IBOutlet weak var selectedOverlayImage: UIImageView!
     
     let viewModel = CandidateViewModel()
     private var panGesture: UIPanGestureRecognizer?
+    private var pinchGesture: UIPinchGestureRecognizer?
+    private var pinchScale: CGFloat = 1.0
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupOverlayGestures()
     }
     
     private func setupUI() {
         candidateCollectionView.delegate = self
         candidateCollectionView.dataSource = self
         candidateCollectionView.register(CandidateCollectionViewCell.nib(), forCellWithReuseIdentifier: CandidateCollectionViewCell.identifier)
+        candidateImageView.image = UIImage(named: "ic_image")
         getData()
         setupGestures()
     }
     
     private func setupGestures() {
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-        candidateImageView.isUserInteractionEnabled = true
-        candidateImageView.addGestureRecognizer(panGesture!)
+        selectedOverlayImage.isUserInteractionEnabled = true
+        selectedOverlayImage.addGestureRecognizer(panGesture!)
+    }
+    
+    private func setupOverlayGestures() {
+        pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
+        selectedOverlayImage.isUserInteractionEnabled = true
+        selectedOverlayImage.addGestureRecognizer(pinchGesture!)
     }
     
     func getData() {
@@ -63,24 +74,34 @@ class CandidateViewController: UIViewController {
     
     private func clearOverlay() {
         candidateImageView.image = UIImage(named: "ic_image")
+        selectedOverlayImage.image = nil
     }
     
     @IBAction func saveButtonPressed(_ sender: UIBarButtonItem) {
-        saveImageToPhotos()
+        saveMergedImage()
     }
     
-    private func saveImageToPhotos() {
-        guard let imageToSave = candidateImageView.image else { return }
-        
+    private func saveMergedImage() {
+        guard let baseImage = candidateImageView.image, let overlayImage = selectedOverlayImage.image else { return }
+        let scale = pinchScale
+        let panTranslation = CGPoint(x: selectedOverlayImage.transform.tx, y: selectedOverlayImage.transform.ty)
+        let mergedImage = baseImage.merge(with: overlayImage, alpha: 0.5, panTranslation: panTranslation, pinchScale: scale)
+        UIView.transition(with: selectedOverlayImage, duration: 0, options: .transitionCrossDissolve, animations: {
+            self.selectedOverlayImage.image = mergedImage
+            self.selectedOverlayImage.transform = .identity
+            self.pinchScale = 1.0
+        }, completion: nil)
+
         PHPhotoLibrary.requestAuthorization { status in
             guard status == .authorized else { return }
             PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetChangeRequest.creationRequestForAsset(from: imageToSave)
+                let request = PHAssetChangeRequest.creationRequestForAsset(from: mergedImage)
                 request.creationDate = Date()
             } completionHandler: { success, error in
                 DispatchQueue.main.async {
                     if success {
                         self.showAlert(title: Constants.success, message: Constants.successMessage)
+                        self.selectedOverlayImage.image = nil
                     } else {
                         self.showAlert(title: Constants.error, message: Constants.errorMessage)
                     }
@@ -88,7 +109,7 @@ class CandidateViewController: UIViewController {
             }
         }
     }
-    
+
     private func loadImage(from url: String, completion: @escaping (UIImage?) -> Void) {
         if let imageUrl = URL(string: url) {
             URLSession.shared.dataTask(with: imageUrl) { (data, response, error) in
@@ -122,18 +143,29 @@ class CandidateViewController: UIViewController {
     }
     
     @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-         guard let imageView = gesture.view else { return }
-         
-         if gesture.state == .began || gesture.state == .changed {
-             let translation = gesture.translation(in: imageView)
-             imageView.frame.origin.x += translation.x
-             imageView.frame.origin.y += translation.y
-             gesture.setTranslation(.zero, in: imageView)
-         }
-     }
+        guard let imageView = gesture.view else { return }
+
+        if gesture.state == .began || gesture.state == .changed {
+            let translation = gesture.translation(in: imageView)
+            imageView.transform = imageView.transform.translatedBy(x: translation.x, y: translation.y)
+            gesture.setTranslation(.zero, in: imageView)
+        }
+    }
+
+    @objc private func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
+        guard let overlayImageView = gesture.view as? UIImageView else { return }
+
+        if gesture.state == .began || gesture.state == .changed {
+            pinchScale *= gesture.scale
+            overlayImageView.transform = overlayImageView.transform.scaledBy(x: gesture.scale, y: gesture.scale)
+            gesture.scale = 1.0
+        }
+    }
+	
 }
 
 extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return viewModel.getCandidateCount()
     }
@@ -153,14 +185,12 @@ extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollect
         if let overlayUrl = viewModel.getCandidate(at: indexPath.row)?.overlayUrl {
             loadImage(from: overlayUrl) { overlayImage in
                 guard let overlayImage = overlayImage else { return }
-                
-                if let currentImage = self.candidateImageView.image {
-                    self.applyBitmapOverlay(image: currentImage, overlayImage: overlayImage) { resultImage in
-                        if let resultImage = resultImage {
-                            self.candidateImageView.image = resultImage
-                        } else {
-                            print("Failed to apply overlay")
-                        }
+                self.selectedOverlayImage.image = overlayImage
+                self.applyBitmapOverlay(image: self.selectedOverlayImage.image ?? UIImage(), overlayImage: overlayImage) { resultImage in
+                    if let resultImage = resultImage {
+                        self.selectedOverlayImage.image = resultImage
+                    } else {
+                        print("Failed to apply overlay")
                     }
                 }
             }

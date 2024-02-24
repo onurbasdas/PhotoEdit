@@ -39,16 +39,27 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="P5X-YO-dO5">
                                 <rect key="frame" x="0.0" y="103" width="393" height="599"/>
                                 <subviews>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ic_image" translatesAutoresizingMaskIntoConstraints="NO" id="vT1-0h-fLe">
-                                        <rect key="frame" x="0.0" y="0.0" width="393" height="599"/>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="vT1-0h-fLe">
+                                        <rect key="frame" x="0.0" y="162" width="393" height="275"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="275" id="69d-hU-5HM"/>
+                                        </constraints>
+                                    </imageView>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="0db-H7-OdV">
+                                        <rect key="frame" x="0.0" y="162" width="393" height="275"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="275" id="yo1-cC-FpI"/>
+                                        </constraints>
                                     </imageView>
                                 </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
-                                    <constraint firstAttribute="bottom" secondItem="vT1-0h-fLe" secondAttribute="bottom" id="4vb-gr-Xra"/>
-                                    <constraint firstItem="vT1-0h-fLe" firstAttribute="leading" secondItem="P5X-YO-dO5" secondAttribute="leading" id="HEm-M8-gZc"/>
-                                    <constraint firstAttribute="trailing" secondItem="vT1-0h-fLe" secondAttribute="trailing" id="Q4e-QC-EQ1"/>
-                                    <constraint firstItem="vT1-0h-fLe" firstAttribute="top" secondItem="P5X-YO-dO5" secondAttribute="top" id="m9a-qm-rY7"/>
+                                    <constraint firstItem="0db-H7-OdV" firstAttribute="leading" secondItem="P5X-YO-dO5" secondAttribute="leading" id="IsO-Vb-cjl"/>
+                                    <constraint firstItem="vT1-0h-fLe" firstAttribute="centerY" secondItem="P5X-YO-dO5" secondAttribute="centerY" id="KWI-PY-dzx"/>
+                                    <constraint firstAttribute="trailing" secondItem="vT1-0h-fLe" secondAttribute="trailing" id="S4c-OH-v34"/>
+                                    <constraint firstItem="0db-H7-OdV" firstAttribute="centerY" secondItem="P5X-YO-dO5" secondAttribute="centerY" id="alw-rS-sLz"/>
+                                    <constraint firstAttribute="trailing" secondItem="0db-H7-OdV" secondAttribute="trailing" id="fNe-QG-wFd"/>
+                                    <constraint firstItem="vT1-0h-fLe" firstAttribute="leading" secondItem="P5X-YO-dO5" secondAttribute="leading" id="xdo-S1-dZp"/>
                                 </constraints>
                             </view>
                         </subviews>
@@ -83,6 +94,7 @@
                         <outlet property="candidateCollectionView" destination="jFw-x1-Ufu" id="MVi-qI-jg6"/>
                         <outlet property="candidateImageBgView" destination="P5X-YO-dO5" id="oiQ-VQ-dFI"/>
                         <outlet property="candidateImageView" destination="vT1-0h-fLe" id="lXV-Cb-9ji"/>
+                        <outlet property="selectedOverlayImage" destination="0db-H7-OdV" id="7cK-kD-vJZ"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -92,7 +104,6 @@
         <!--Navigation Controller-->
         <scene sceneID="WAr-Ky-sW8">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="73D-l6-R1h" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="rIM-ZP-lnV" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="iVf-ck-zBa">
@@ -104,13 +115,13 @@
                         <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="wc4-xK-k9A"/>
                     </connections>
                 </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="73D-l6-R1h" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-16.030534351145036" y="-27.464788732394368"/>
         </scene>
     </scenes>
     <resources>
         <image name="checkmark" catalog="system" width="128" height="114"/>
-        <image name="ic_image" width="1280" height="831"/>
         <image name="xmark" catalog="system" width="128" height="113"/>
     </resources>
 </document>

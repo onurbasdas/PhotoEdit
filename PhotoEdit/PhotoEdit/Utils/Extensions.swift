@@ -16,3 +16,21 @@ extension UIViewController {
         present(alertController, animated: true, completion: nil)
     }
 }
+
+extension UIImage {
+    func merge(with overlay: UIImage, alpha: CGFloat, panTranslation: CGPoint, pinchScale: CGFloat) -> UIImage {
+        UIGraphicsBeginImageContextWithOptions(self.size, false, 0.0)
+
+        self.draw(at: .zero)
+        overlay.draw(
+            in: CGRect(origin: CGPoint(x: panTranslation.x, y: panTranslation.y), size: self.size),
+            blendMode: .normal,
+            alpha: alpha
+        )
+
+        let mergedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return mergedImage ?? self
+    }
+}

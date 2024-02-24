@@ -51,7 +51,10 @@ class CandidateViewController: UIViewController {
         viewModel.fetchCandidateData { result in
             switch result {
             case .success(let candidateArray):
-                self.viewModel.setCandidateArray(candidateArray)
+                let noneOverlay = CandidateModel(overlayId: 0, overlayName: "None", overlayPreviewIconUrl: "", overlayUrl: "")
+                var candidates = [noneOverlay]
+                candidates.append(contentsOf: candidateArray)
+                self.viewModel.setCandidateArray(candidates)
                 DispatchQueue.main.async {
                     self.candidateCollectionView.reloadData()
                 }
@@ -82,20 +85,25 @@ class CandidateViewController: UIViewController {
     }
     
     private func saveMergedImage() {
-        guard let baseImage = candidateImageView.image, let overlayImage = selectedOverlayImage.image else { return }
-        let scale = pinchScale
-        let panTranslation = CGPoint(x: selectedOverlayImage.transform.tx, y: selectedOverlayImage.transform.ty)
-        let mergedImage = baseImage.merge(with: overlayImage, alpha: 0.5, panTranslation: panTranslation, pinchScale: scale)
-        UIView.transition(with: selectedOverlayImage, duration: 0, options: .transitionCrossDissolve, animations: {
-            self.selectedOverlayImage.image = mergedImage
-            self.selectedOverlayImage.transform = .identity
-            self.pinchScale = 1.0
-        }, completion: nil)
+        guard let baseImage = candidateImageView.image else { return }
+        if let overlayImage = selectedOverlayImage.image {
+            let scale = pinchScale
+            let panTranslation = CGPoint(x: selectedOverlayImage.transform.tx, y: selectedOverlayImage.transform.ty)
+            var transform = CGAffineTransform.identity
+            transform = transform.scaledBy(x: scale, y: scale)
+            transform = transform.translatedBy(x: panTranslation.x, y: panTranslation.y)
+            let mergedImage = baseImage.merge(with: overlayImage, alpha: 0.5, transform: transform)
+            saveImageToPhotoLibrary(image: mergedImage)
+        } else {
+            saveImageToPhotoLibrary(image: baseImage)
+        }
+    }
 
+    private func saveImageToPhotoLibrary(image: UIImage) {
         PHPhotoLibrary.requestAuthorization { status in
             guard status == .authorized else { return }
             PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetChangeRequest.creationRequestForAsset(from: mergedImage)
+                let request = PHAssetChangeRequest.creationRequestForAsset(from: image)
                 request.creationDate = Date()
             } completionHandler: { success, error in
                 DispatchQueue.main.async {
@@ -144,24 +152,21 @@ class CandidateViewController: UIViewController {
     
     @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         guard let imageView = gesture.view else { return }
-
         if gesture.state == .began || gesture.state == .changed {
             let translation = gesture.translation(in: imageView)
             imageView.transform = imageView.transform.translatedBy(x: translation.x, y: translation.y)
             gesture.setTranslation(.zero, in: imageView)
         }
     }
-
+    
     @objc private func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
         guard let overlayImageView = gesture.view as? UIImageView else { return }
-
         if gesture.state == .began || gesture.state == .changed {
             pinchScale *= gesture.scale
             overlayImageView.transform = overlayImageView.transform.scaledBy(x: gesture.scale, y: gesture.scale)
             gesture.scale = 1.0
         }
     }
-	
 }
 
 extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
@@ -182,6 +187,10 @@ extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollect
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if indexPath.row == 0 {
+            candidateImageView.image = UIImage(named: "ic_image")
+            selectedOverlayImage.image = nil
+        }
         if let overlayUrl = viewModel.getCandidate(at: indexPath.row)?.overlayUrl {
             loadImage(from: overlayUrl) { overlayImage in
                 guard let overlayImage = overlayImage else { return }

@@ -28,17 +28,21 @@ class CandidateCollectionViewCell: UICollectionViewCell {
     }
     
     func bind(data: CandidateModel) {
-        candidateLabel.text = data.overlayName
-        if let url = URL(string: data.overlayPreviewIconUrl ?? "") {
-            URLSession.shared.dataTask(with: url) { [weak self] (data, _, error) in
-                guard let data = data, error == nil else {
-                    return
-                }
-                DispatchQueue.main.async {
-                    self?.candidateImageView.image = UIImage(data: data)
-                }
-            }.resume()
+        if data.overlayId == 0 {
+            candidateLabel.text = "None"
+            candidateImageView.image = UIImage(named: "ic_none")
+        } else {
+            candidateLabel.text = data.overlayName
+            if let url = URL(string: data.overlayPreviewIconUrl) {
+                URLSession.shared.dataTask(with: url) { [weak self] (data, _, error) in
+                    guard let data = data, error == nil else {
+                        return
+                    }
+                    DispatchQueue.main.async {
+                        self?.candidateImageView.image = UIImage(data: data)
+                    }
+                }.resume()
+            }
         }
     }
-    
 }

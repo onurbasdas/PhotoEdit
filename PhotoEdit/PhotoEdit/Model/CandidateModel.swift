@@ -6,17 +6,18 @@
 //
 
 import Foundation
+import UIKit
 
-struct CandidateModel : Codable {
-    let overlayId : Int?
-    let overlayName : String?
-    let overlayPreviewIconUrl : String?
-    let overlayUrl : String?
+class CandidateModel: Codable {
+    var overlayId: Int
+    var overlayName: String
+    var overlayPreviewIconUrl: String
+    var overlayUrl: String
 
-    enum CodingKeys: String, CodingKey {
-        case overlayId = "overlayId"
-        case overlayName = "overlayName"
-        case overlayPreviewIconUrl = "overlayPreviewIconUrl"
-        case overlayUrl = "overlayUrl"
+    init(overlayId: Int, overlayName: String, overlayPreviewIconUrl: String, overlayUrl: String) {
+        self.overlayId = overlayId
+        self.overlayName = overlayName
+        self.overlayPreviewIconUrl = overlayPreviewIconUrl
+        self.overlayUrl = overlayUrl
     }
 }

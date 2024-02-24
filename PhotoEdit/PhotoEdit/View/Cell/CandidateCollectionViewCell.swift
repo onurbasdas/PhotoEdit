@@ -18,9 +18,26 @@ class CandidateCollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var candidateImageView: UIImageView!
     @IBOutlet weak var candidateLabel: UILabel!
     
+    override var isSelected: Bool {
+         didSet {
+             updateAppearance()
+         }
+     }
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         configureUI()
+    }
+    
+    func updateAppearance() {
+        if isSelected {
+            candidateImageView.layer.borderColor = UIColor.cyan.cgColor
+            candidateImageView.layer.borderWidth = 2.0
+            candidateLabel.textColor = UIColor.cyan
+        } else {
+            candidateImageView.layer.borderWidth = 0.0
+            candidateLabel.textColor = .black
+        }
     }
     
     func configureUI() {
@@ -40,6 +57,7 @@ class CandidateCollectionViewCell: UICollectionViewCell {
                     }
                     DispatchQueue.main.async {
                         self?.candidateImageView.image = UIImage(data: data)
+                        self?.updateAppearance()
                     }
                 }.resume()
             }

@@ -14,6 +14,7 @@ class CandidateViewController: UIViewController {
     @IBOutlet weak var candidateImageBgView: UIView!
     @IBOutlet weak var candidateImageView: UIImageView!
     @IBOutlet weak var selectedOverlayImage: UIImageView!
+    @IBOutlet weak var histogramView: UIView!
     
     let viewModel = CandidateViewModel()
     private var panGesture: UIPanGestureRecognizer?
@@ -98,7 +99,7 @@ class CandidateViewController: UIViewController {
             saveImageToPhotoLibrary(image: baseImage)
         }
     }
-
+    
     private func saveImageToPhotoLibrary(image: UIImage) {
         PHPhotoLibrary.requestAuthorization { status in
             guard status == .authorized else { return }
@@ -117,7 +118,7 @@ class CandidateViewController: UIViewController {
             }
         }
     }
-
+    
     private func loadImage(from url: String, completion: @escaping (UIImage?) -> Void) {
         if let imageUrl = URL(string: url) {
             URLSession.shared.dataTask(with: imageUrl) { (data, response, error) in
@@ -140,7 +141,6 @@ class CandidateViewController: UIViewController {
     
     private func applyBitmapOverlay(image: UIImage, overlayImage: UIImage, completion: @escaping (UIImage?) -> Void) {
         let rect = CGRect(x: 0, y: 0, width: image.size.width, height: image.size.height)
-        
         UIGraphicsBeginImageContextWithOptions(rect.size, false, 0.0)
         image.draw(in: rect)
         overlayImage.draw(in: rect, blendMode: .normal, alpha: 0.5)
@@ -187,10 +187,6 @@ extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollect
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.row == 0 {
-            candidateImageView.image = UIImage(named: "ic_image")
-            selectedOverlayImage.image = nil
-        }
         if let overlayUrl = viewModel.getCandidate(at: indexPath.row)?.overlayUrl {
             loadImage(from: overlayUrl) { overlayImage in
                 guard let overlayImage = overlayImage else { return }
@@ -198,11 +194,67 @@ extension CandidateViewController: UICollectionViewDelegateFlowLayout, UICollect
                 self.applyBitmapOverlay(image: self.selectedOverlayImage.image ?? UIImage(), overlayImage: overlayImage) { resultImage in
                     if let resultImage = resultImage {
                         self.selectedOverlayImage.image = resultImage
+                        self.drawHistogram(image: resultImage)
                     } else {
                         print("Failed to apply overlay")
                     }
                 }
             }
         }
+    }
+}
+
+extension CandidateViewController {
+    
+    private func drawHistogram(image: UIImage) {
+        guard let cgImage = image.cgImage else { return }
+        let histogramValues = generateHistogram(cgImage: cgImage)
+        let histogramLayer = createHistogramLayer(values: histogramValues)
+        histogramView.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+        histogramView.layer.addSublayer(histogramLayer)
+    }
+    
+    private func generateHistogram(cgImage: CGImage) -> [Int] {
+        let width = cgImage.width
+        let height = cgImage.height
+        let bytesPerPixel = 4
+        let bytesPerRow = width * bytesPerPixel
+        let bitsPerComponent = 8
+        let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        
+        guard let pixelData = cgImage.dataProvider?.data,
+              let data: UnsafePointer<UInt8> = CFDataGetBytePtr(pixelData) else {
+            return []
+        }
+        
+        var histogram = [Int](repeating: 0, count: 256)
+        
+        for row in 0..<height {
+            for col in 0..<width {
+                let pixelIndex = bytesPerRow * row + bytesPerPixel * col
+                let intensity = Int(data[pixelIndex])
+                
+                histogram[intensity] += 1
+            }
+        }
+        
+        return histogram
+    }
+    
+    private func createHistogramLayer(values: [Int]) -> CALayer {
+        let histogramLayer = CALayer()
+        let barWidth: CGFloat = 1.0
+        let maxBarHeight = CGFloat(values.max() ?? 1)
+        for (index, value) in values.enumerated() {
+            let barHeight = CGFloat(value) / maxBarHeight * histogramView.frame.height
+            let barRect = CGRect(x: CGFloat(index) * barWidth, y: histogramView.frame.height - barHeight, width: barWidth, height: barHeight)
+            
+            let barLayer = CALayer()
+            barLayer.frame = barRect
+            barLayer.backgroundColor = UIColor.black.cgColor
+            histogramLayer.addSublayer(barLayer)
+        }
+        
+        return histogramLayer
     }
 }

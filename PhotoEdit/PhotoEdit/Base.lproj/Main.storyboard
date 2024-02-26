@@ -4,6 +4,7 @@
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22504"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="collection view cell content view" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -51,14 +52,24 @@
                                             <constraint firstAttribute="height" constant="275" id="yo1-cC-FpI"/>
                                         </constraints>
                                     </imageView>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="zdU-CM-pi6">
+                                        <rect key="frame" x="153" y="471" width="240" height="128"/>
+                                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="240" id="2or-Fq-PN1"/>
+                                            <constraint firstAttribute="height" constant="128" id="QcN-s0-foB"/>
+                                        </constraints>
+                                    </view>
                                 </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
+                                    <constraint firstAttribute="bottom" secondItem="zdU-CM-pi6" secondAttribute="bottom" id="0E9-rX-A6M"/>
                                     <constraint firstItem="0db-H7-OdV" firstAttribute="leading" secondItem="P5X-YO-dO5" secondAttribute="leading" id="IsO-Vb-cjl"/>
                                     <constraint firstItem="vT1-0h-fLe" firstAttribute="centerY" secondItem="P5X-YO-dO5" secondAttribute="centerY" id="KWI-PY-dzx"/>
                                     <constraint firstAttribute="trailing" secondItem="vT1-0h-fLe" secondAttribute="trailing" id="S4c-OH-v34"/>
                                     <constraint firstItem="0db-H7-OdV" firstAttribute="centerY" secondItem="P5X-YO-dO5" secondAttribute="centerY" id="alw-rS-sLz"/>
                                     <constraint firstAttribute="trailing" secondItem="0db-H7-OdV" secondAttribute="trailing" id="fNe-QG-wFd"/>
+                                    <constraint firstAttribute="trailing" secondItem="zdU-CM-pi6" secondAttribute="trailing" id="tqG-QK-OBN"/>
                                     <constraint firstItem="vT1-0h-fLe" firstAttribute="leading" secondItem="P5X-YO-dO5" secondAttribute="leading" id="xdo-S1-dZp"/>
                                 </constraints>
                             </view>
@@ -94,6 +105,7 @@
                         <outlet property="candidateCollectionView" destination="jFw-x1-Ufu" id="MVi-qI-jg6"/>
                         <outlet property="candidateImageBgView" destination="P5X-YO-dO5" id="oiQ-VQ-dFI"/>
                         <outlet property="candidateImageView" destination="vT1-0h-fLe" id="lXV-Cb-9ji"/>
+                        <outlet property="histogramView" destination="zdU-CM-pi6" id="AFm-zq-yju"/>
                         <outlet property="selectedOverlayImage" destination="0db-H7-OdV" id="7cK-kD-vJZ"/>
                     </connections>
                 </viewController>
@@ -123,5 +135,8 @@
     <resources>
         <image name="checkmark" catalog="system" width="128" height="114"/>
         <image name="xmark" catalog="system" width="128" height="113"/>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
     </resources>
 </document>
